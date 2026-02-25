@@ -4,6 +4,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Data
 public class User
@@ -15,4 +17,8 @@ public class User
     private String emailId;
     private String password;
     private String phoneNumber;
+    private String passwordResetToken;
+    private LocalDateTime passwordTokenExpiry;
+    private String usernameResetToken;
+    private LocalDateTime usernameTokenExpiry;
 }
