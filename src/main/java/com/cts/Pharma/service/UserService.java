@@ -1,13 +1,19 @@
 package com.cts.Pharma.service;
 
+import com.cts.Pharma.exception.EmailNotFoundException;
+import com.cts.Pharma.exception.InvalidCredentialsException;
+import com.cts.Pharma.exception.InvalidTokenException;
+import com.cts.Pharma.exception.NoUserFoundException;
 import com.cts.Pharma.model.User;
 import com.cts.Pharma.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -35,15 +41,24 @@ public class UserService {
     // LOGIN
     public String login(String name, String password) {
 
-        User user = userRepository.findByName(name)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        // compare raw password with hashed password
-        if (passwordEncoder.matches(password, user.getPassword())) {
-            return "Login Successful";
-        } else {
-            return "Invalid Credentials";
+        Optional<User> user1 = userRepository.findByName(name);
+        if(user1.isPresent())
+        {
+            User user = user1.get();
+            // compare raw password with hashed password
+            if (passwordEncoder.matches(password, user.getPassword())) {
+                return "Login Successful";
+            } else {
+                throw new NoUserFoundException("Invalid Credentials");
+            }
         }
+        else
+        {
+            throw new NoUserFoundException("User Not Found");
+        }
+
+
+
     }
 
     public List<User> getAllUsers() {
@@ -52,9 +67,8 @@ public class UserService {
 
     public String forgotPassword(String emailId) {
 
-        System.out.println("Incoming Email: " + emailId);
         User user = userRepository.findByEmailId(emailId)
-                .orElseThrow(() -> new RuntimeException("Email not found"));
+                .orElseThrow(() -> new EmailNotFoundException("Email Not Found"));
 
         String token = UUID.randomUUID().toString();
 
@@ -73,10 +87,10 @@ public class UserService {
     public String resetPassword(String token, String newPassword) {
 
         User user = userRepository.findByPasswordResetToken(token)
-                .orElseThrow(() -> new RuntimeException("Invalid token"));
+                .orElseThrow(() -> new InvalidTokenException("Invalid Token"));
 
         if (user.getPasswordTokenExpiry().isBefore(LocalDateTime.now())) {
-            return "Token expired";
+            throw new InvalidTokenException("Token Expired");
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));
@@ -85,13 +99,13 @@ public class UserService {
 
         userRepository.save(user);
 
-        return "Password reset successful";
+        return "Password Reset Successful";
     }
 
     public String forgotUsername(String emailId) {
 
         User user = userRepository.findByEmailId(emailId)
-                .orElseThrow(() -> new RuntimeException("Email not found"));
+                .orElseThrow(() -> new EmailNotFoundException("Email Not Found"));
 
         String token = UUID.randomUUID().toString();
 
@@ -100,12 +114,9 @@ public class UserService {
 
         userRepository.save(user);
 
-        String subject = "Username Reset Token";
+        String body = "Your username reset token is: " + token;
 
-        String body = "Your username reset token is: " + token
-                + "\n\nThis token will expire in 15 minutes.";
-
-        emailService.sendEmail(emailId, subject, body);
+        emailService.sendEmail(emailId, "Username Reset Token", body);
 
         return "Username reset token sent to email";
     }
@@ -113,25 +124,22 @@ public class UserService {
     public String resetUsername(String token, String newUsername) {
 
         User user = userRepository.findByUsernameResetToken(token)
-                .orElseThrow(() -> new RuntimeException("Invalid token"));
+                .orElseThrow(() -> new InvalidTokenException("Invalid Token"));
 
         if (user.getUsernameTokenExpiry().isBefore(LocalDateTime.now())) {
-            return "Token expired";
+            throw new InvalidTokenException("Token Expired");
         }
 
-        // check if username already exists
         if (userRepository.findByName(newUsername).isPresent()) {
-            return "Username already taken";
+            throw new InvalidCredentialsException("Username already taken");
         }
 
         user.setName(newUsername);
-
-        // clear token after success
         user.setUsernameResetToken(null);
         user.setUsernameTokenExpiry(null);
 
         userRepository.save(user);
 
-        return "Username reset successful";
+        return "Username Reset Successful";
     }
 }

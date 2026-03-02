@@ -1,6 +1,8 @@
 package com.cts.Pharma.controller;
 
 import com.cts.Pharma.dto.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.cts.Pharma.model.User;
@@ -18,13 +20,13 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/signup")
-    public String register(@RequestBody User user) {
-        return userService.register(user);
+    public ResponseEntity<String> register(@RequestBody User user) {
+        return new ResponseEntity<>(userService.register(user), HttpStatus.OK);
     }
 
     @PostMapping("/login")
-    public String login(@RequestBody LoginRequest request) {
-        return userService.login(request.getName(), request.getPassword());
+    public ResponseEntity<String> login(@RequestBody LoginRequest request) {
+        return new ResponseEntity<>(userService.login(request.getName(), request.getPassword()), HttpStatus.OK);
     }
 
     @GetMapping("/all")
@@ -33,28 +35,28 @@ public class UserController {
     }
 
     @PostMapping("/forgot-password")
-    public String forgotPassword(@RequestBody ForgotPasswordRequest request) {
-        return userService.forgotPassword(request.getEmailId());
+    public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        return new ResponseEntity<>(userService.forgotPassword(request.getEmailId()), HttpStatus.OK);
     }
 
     @PostMapping("/reset-password")
-    public String resetPassword(@RequestBody ResetPasswordRequest request) {
-        return userService.resetPassword(
+    public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest request) {
+        return new ResponseEntity<>(userService.resetPassword(
                 request.getToken(),
                 request.getNewPassword()
-        );
+        ), HttpStatus.OK);
     }
 
     @PostMapping("/forgot-username")
-    public String forgotUsername(@RequestBody ForgotUsernameRequest request) {
-        return userService.forgotUsername(request.getEmailId());
+    public ResponseEntity<String> forgotUsername(@RequestBody ForgotUsernameRequest request) {
+        return new ResponseEntity<>(userService.forgotUsername(request.getEmailId()), HttpStatus.OK);
     }
 
     @PostMapping("/reset-username")
-    public String resetUsername(@RequestBody ResetUsernameRequest request) {
-        return userService.resetUsername(
+    public  ResponseEntity<String> resetUsername(@RequestBody ResetUsernameRequest request) {
+        return new ResponseEntity<>(userService.resetUsername(
                 request.getToken(),
                 request.getNewUsername()
-        );
+        ), HttpStatus.OK);
     }
 }
